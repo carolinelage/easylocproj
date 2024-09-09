@@ -7,6 +7,7 @@ function SinglePage() {
   const { id } = useParams();
   const [book, setBook] = useState(null);
   const [selectedMode, setSelectedMode] = useState(null);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,17 +18,15 @@ function SinglePage() {
       .catch((error) => console.log(error));
   }, [id]);
 
-  const addToCart = () => {
-    if (!selectedMode) return;
+  const addToCart = (e) => {
+    e.stopPropagation();
+    if (!selectedMode) {
+      setError('Por favor, selecione um modo de aluguel antes de adicionar ao carrinho.');
+      return;
+    }
 
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existingBookIndex = cart.findIndex(item => item.id === book.id && item.mode.id === selectedMode.id);
-
-    if (existingBookIndex !== -1) {
-      cart[existingBookIndex].quantity += 1;
-    } else {
-      cart.push({ ...book, mode: selectedMode, quantity: 1 });
-    }
+    cart.push({ ...book, mode: selectedMode, price: selectedMode.price, quantity: 1 });
 
     localStorage.setItem('cart', JSON.stringify(cart));
     navigate('/cart');
@@ -41,12 +40,13 @@ function SinglePage() {
     <div className="container mx-auto p-5">
       <div className="flex justify-between items-center mb-4">
         <button 
-          className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
-          onClick={() => navigate('/')}
+          className="text-white py-1 px-3 rounded transition"
+          style={{backgroundColor: '#858666'}} 
+          onClick={() => navigate('/home')}
         >
           Voltar para Home
         </button>
-        <FaShoppingCart className="text-2xl cursor-pointer" onClick={() => navigate('/cart')} />
+        <FaShoppingCart className="text-2xl cursor-pointer" onClick={() => navigate('/cart')} color='#858666'/>
       </div>
       <div className="flex flex-col md:flex-row items-center md:items-start">
         <img 
@@ -65,16 +65,21 @@ function SinglePage() {
               <button 
                 key={mode.rental_mode.id} 
                 className={`py-1 px-3 rounded border transition ${selectedMode?.id === mode.id ? 'border-blue-600 text-blue-600' : 'border-gray-500 text-gray-500 hover:border-blue-600 hover:text-blue-600'}`}
-                onClick={() => setSelectedMode(mode)}
+                onClick={() => {
+                  setSelectedMode(mode);
+                  setError('');
+                }}
               >
                 {mode.rental_mode.mode_name} - R$ {mode.price}
               </button>
             ))}
           </div>
+          {error && <div className="text-red-500 mb-4">{error}</div>}
           <button 
-            className="mt-4 bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
+            className="mt-4 text-white py-1 px-3 rounded transition"
             onClick={addToCart}
             disabled={!selectedMode}
+            style={{backgroundColor: '#858666'}} 
           >
             Adicionar ao Carrinho
           </button>
